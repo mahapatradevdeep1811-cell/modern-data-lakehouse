@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+.env
+*.env
+
+# Secrets
+secrets/
+*.json
+!package.json
+
+# Data (keep directory structure, ignore actual data files)
+data/raw/**/*.csv
+data/raw/**/*.json
+data/raw/**/*.parquet
+data/staging/
+data/curated/
+data/checkpoints/
+
+# Spark
+derby.log
+metastore_db/
+
+# Airflow
+airflow.cfg
+airflow.db
+standalone_admin_password.txt
+logs/
+
+# Test artefacts
+.coverage
+htmlcov/
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.override.yml

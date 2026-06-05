@@ -1,0 +1,128 @@
+version: "3.9"
+
+x-airflow-common:
+  &airflow-common
+  image: apache/airflow:2.9.1-python3.11
+  environment:
+    &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    AIRFLOW__CORE__FERNET_KEY: ""
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth
+    WAREHOUSE_TARGET: ${WAREHOUSE_TARGET:-snowflake}
+    # Snowflake
+    SNOWFLAKE_ACCOUNT: ${SNOWFLAKE_ACCOUNT}
+    SNOWFLAKE_USER: ${SNOWFLAKE_USER}
+    SNOWFLAKE_PASSWORD: ${SNOWFLAKE_PASSWORD}
+    SNOWFLAKE_WAREHOUSE: ${SNOWFLAKE_WAREHOUSE:-COMPUTE_WH}
+    SNOWFLAKE_DATABASE: ${SNOWFLAKE_DATABASE:-LAKEHOUSE_DB}
+    SNOWFLAKE_SCHEMA: ${SNOWFLAKE_SCHEMA:-CURATED}
+    # BigQuery
+    GCP_PROJECT_ID: ${GCP_PROJECT_ID}
+    BQ_DATASET: ${BQ_DATASET:-lakehouse_curated}
+    GOOGLE_APPLICATION_CREDENTIALS: /opt/airflow/secrets/gcp-credentials.json
+    BQ_TEMP_GCS_BUCKET: ${BQ_TEMP_GCS_BUCKET}
+  volumes:
+    - ./orchestration/dags:/opt/airflow/dags
+    - ./orchestration/plugins:/opt/airflow/plugins
+    - ./etl:/opt/airflow/etl
+    - ./dq:/opt/airflow/dq
+    - ./utils:/opt/airflow/utils
+    - ./config:/opt/airflow/config
+    - ./data:/opt/airflow/data
+    - ./secrets:/opt/airflow/secrets
+    - airflow-logs:/opt/airflow/logs
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+
+  # -------------------------------------------------------------------
+  postgres:
+  # -------------------------------------------------------------------
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # -------------------------------------------------------------------
+  airflow-webserver:
+  # -------------------------------------------------------------------
+    <<: *airflow-common
+    command: webserver
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # -------------------------------------------------------------------
+  airflow-scheduler:
+  # -------------------------------------------------------------------
+    <<: *airflow-common
+    command: scheduler
+    restart: unless-stopped
+
+  # -------------------------------------------------------------------
+  airflow-init:
+  # -------------------------------------------------------------------
+    <<: *airflow-common
+    command: >
+      bash -c "
+        airflow db migrate &&
+        airflow users create
+          --username admin
+          --firstname Admin
+          --lastname User
+          --role Admin
+          --email admin@example.com
+          --password admin
+      "
+    restart: on-failure
+
+  # -------------------------------------------------------------------
+  spark-master:
+  # -------------------------------------------------------------------
+    image: bitnami/spark:3.5
+    environment:
+      SPARK_MODE: master
+      SPARK_MASTER_OPTS: "-Dspark.deploy.defaultCores=2"
+    ports:
+      - "7077:7077"
+      - "8081:8080"
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+
+  # -------------------------------------------------------------------
+  spark-worker:
+  # -------------------------------------------------------------------
+    image: bitnami/spark:3.5
+    environment:
+      SPARK_MODE: worker
+      SPARK_MASTER_URL: spark://spark-master:7077
+      SPARK_WORKER_MEMORY: 2G
+      SPARK_WORKER_CORES: 2
+    depends_on:
+      - spark-master
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  airflow-logs:

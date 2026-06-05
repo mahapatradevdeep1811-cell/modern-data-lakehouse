@@ -1,0 +1,30 @@
+# Snowflake warehouse configuration
+# Values are read from environment variables for security.
+
+snowflake:
+  account: ${SNOWFLAKE_ACCOUNT}
+  user: ${SNOWFLAKE_USER}
+  password: ${SNOWFLAKE_PASSWORD}
+  role: ${SNOWFLAKE_ROLE:-SYSADMIN}
+  warehouse: ${SNOWFLAKE_WAREHOUSE:-COMPUTE_WH}
+  database: ${SNOWFLAKE_DATABASE:-LAKEHOUSE_DB}
+  schema: ${SNOWFLAKE_SCHEMA:-CURATED}
+
+  # Connection pool settings
+  pool:
+    min_connections: 2
+    max_connections: 10
+    connection_timeout: 30
+
+  # Write options
+  write:
+    mode: merge              # append | overwrite | merge
+    merge_keys: []           # Columns used as merge keys (set per table)
+    staging_schema: STAGING
+
+  # Spark connector JAR (must be on SPARK_CLASSPATH)
+  spark_connector:
+    sfURL: ${SNOWFLAKE_ACCOUNT}.snowflakecomputing.com
+    sfWarehouse: ${SNOWFLAKE_WAREHOUSE:-COMPUTE_WH}
+    sfDatabase: ${SNOWFLAKE_DATABASE:-LAKEHOUSE_DB}
+    sfSchema: ${SNOWFLAKE_SCHEMA:-CURATED}

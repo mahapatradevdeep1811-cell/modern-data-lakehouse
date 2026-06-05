@@ -1,0 +1,26 @@
+# BigQuery warehouse configuration
+# Values are read from environment variables for security.
+
+bigquery:
+  project: ${GCP_PROJECT_ID}
+  dataset: ${BQ_DATASET:-lakehouse_curated}
+  location: ${BQ_LOCATION:-US}
+  credentials_path: ${GOOGLE_APPLICATION_CREDENTIALS}
+
+  # Write options
+  write:
+    mode: WRITE_TRUNCATE      # WRITE_TRUNCATE | WRITE_APPEND | WRITE_EMPTY
+    create_disposition: CREATE_IF_NEEDED
+    clustering_fields: []     # Set per table
+    partition_field: null     # Date/timestamp column for partitioning
+
+  # Spark BigQuery connector
+  spark_connector:
+    temporaryGcsBucket: ${BQ_TEMP_GCS_BUCKET}
+    viewsEnabled: "true"
+    materializationDataset: ${BQ_MATERIALIZATION_DATASET:-lakehouse_staging}
+
+  # Cost controls
+  query:
+    use_legacy_sql: false
+    maximum_bytes_billed: 10737418240   # 10 GB hard limit per query

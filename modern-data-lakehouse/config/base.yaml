@@ -1,0 +1,39 @@
+# Base configuration for Modern Data Lakehouse Pipeline
+# Override per-environment via environment variables or specific config files.
+
+app:
+  name: modern-data-lakehouse
+  version: "1.0.0"
+  env: development           # development | staging | production
+  log_level: INFO
+
+warehouse:
+  target: snowflake          # Toggle: "snowflake" | "bigquery"
+
+spark:
+  app_name: LakehousePipeline
+  master: local[*]           # Use "spark://host:7077" for cluster
+  configs:
+    spark.sql.shuffle.partitions: "200"
+    spark.sql.adaptive.enabled: "true"
+    spark.sql.adaptive.coalescePartitions.enabled: "true"
+    spark.serializer: org.apache.spark.serializer.KryoSerializer
+    spark.sql.extensions: io.delta.sql.DeltaSparkSessionExtension
+    spark.sql.catalog.spark_catalog: org.apache.spark.sql.delta.catalog.DeltaCatalog
+
+storage:
+  raw_path: data/raw
+  staging_path: data/staging
+  curated_path: data/curated
+  checkpoint_path: data/checkpoints
+  format: delta              # delta | parquet | orc
+
+data_quality:
+  fail_on_error: true
+  null_threshold: 0.05       # Max 5% nulls allowed per column
+  reconciliation_tolerance: 0.001  # 0.1% row count variance allowed
+
+pipeline:
+  batch_size: 10000
+  max_retries: 3
+  retry_delay_seconds: 60
