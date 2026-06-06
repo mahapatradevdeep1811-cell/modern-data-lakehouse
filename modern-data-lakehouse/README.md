@@ -1,10 +1,10 @@
-# 🏗️ Modern Data Lakehouse Pipeline
+# Modern Data Lakehouse Pipeline
 
 A production-grade, PySpark-based ETL framework for building a Modern Data Lakehouse with support for **Snowflake** and **BigQuery** — switchable via a single config toggle. Orchestrated with **Apache Airflow**.
 
 ---
 
-## 📐 Architecture Overview
+## Architecture Overview
 
 ```
 Raw Sources (CSV / JSON / Parquet / API)
@@ -37,7 +37,7 @@ Raw Sources (CSV / JSON / Parquet / API)
 
 ---
 
-## 🗂️ Project Structure
+## Project Structure
 
 ```
 modern-data-lakehouse/
@@ -71,7 +71,7 @@ modern-data-lakehouse/
 
 ---
 
-## ⚙️ Configuration Toggle
+## Configuration Toggle
 
 Switch between Snowflake and BigQuery in `config/base.yaml`:
 
@@ -84,11 +84,11 @@ All loaders and connection pools respect this single flag.
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Clone & install
 ```bash
-git clone https://github.com/<your-username>/modern-data-lakehouse.git
+git clone https://github.com/mahapatradevdeep1811-cell/modern-data-lakehouse.git
 cd modern-data-lakehouse
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
@@ -125,7 +125,7 @@ make test-int      # Integration only
 
 ---
 
-## 📦 Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
@@ -141,6 +141,6 @@ make test-int      # Integration only
 
 ---
 
-## 📄 License
+## License
 
 MIT
